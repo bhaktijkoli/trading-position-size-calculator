@@ -7,11 +7,13 @@ const Calculator: React.FC = () => {
   const [entryPrice, setEntryPrice] = useLocalStorage('entryPrice', 0)
   const [stopLossPrice, setStopLossPrice] = useLocalStorage('stopLossPrice', 0)
   const [quantity, setQuantity] = useLocalStorage('quantity', 0)
+  const [targets, setTargets] = useLocalStorage<number[]>('targets', [])
 
   React.useEffect(() => {
-    const stopLossInPoints = Math.abs(entryPrice - stopLossPrice)
-    const quantity = Math.floor(riskPerTrade / stopLossInPoints) || 0
+    const stopLossInPoints = entryPrice - stopLossPrice
+    const quantity = Math.floor(riskPerTrade / Math.abs(stopLossInPoints)) || 0
     setQuantity(quantity)
+    setTargets([entryPrice + stopLossInPoints, entryPrice + 2 * stopLossInPoints, entryPrice + 3 * stopLossInPoints])
   }, [riskPerTrade, entryPrice, stopLossPrice])
 
   return (
@@ -60,8 +62,9 @@ const Calculator: React.FC = () => {
         </NumberInput>
       </FormControl>
       <Alert status='info'>
-        <VStack justifyContent='flex-start'>
+        <VStack alignItems='flex-start'>
           <Text>Quantity: <b>{quantity}</b></Text>
+          <Text>Target: <b>{targets.join(' - ')}</b></Text>
         </VStack>
       </Alert>
     </VStack>
