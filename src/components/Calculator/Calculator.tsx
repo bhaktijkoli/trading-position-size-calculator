@@ -3,17 +3,21 @@ import { useLocalStorage } from "@uidotdev/usehooks";
 import * as React from 'react'
 
 const Calculator: React.FC = () => {
-  const [riskPerTrade, setRiskPerTrade] = useLocalStorage('riskPerTrade', 500)
-  const [entryPrice, setEntryPrice] = useLocalStorage('entryPrice', 0)
-  const [stopLossPrice, setStopLossPrice] = useLocalStorage('stopLossPrice', 0)
+  const [riskPerTrade, setRiskPerTrade] = useLocalStorage('riskPerTrade', '500')
+  const [entryPrice, setEntryPrice] = useLocalStorage('entryPrice', '0')
+  const [stopLossPrice, setStopLossPrice] = useLocalStorage('stopLossPrice', '0')
   const [quantity, setQuantity] = useLocalStorage('quantity', 0)
   const [targets, setTargets] = useLocalStorage<number[]>('targets', [])
 
   React.useEffect(() => {
-    const stopLossInPoints = entryPrice - stopLossPrice
-    const quantity = Math.floor(riskPerTrade / Math.abs(stopLossInPoints)) || 0
+    const parsedStopLossPrice = parseInt(stopLossPrice)
+    const parsedEntryPrice = parseInt(entryPrice)
+    const parsedRiskPerTrade = parseInt(riskPerTrade)
+    if (!parsedStopLossPrice || !parsedEntryPrice || !parsedRiskPerTrade) return
+    const stopLossInPoints = parsedEntryPrice - parsedStopLossPrice
+    const quantity = Math.floor(parsedRiskPerTrade / Math.abs(stopLossInPoints)) || 0
     setQuantity(quantity)
-    setTargets([entryPrice + stopLossInPoints, entryPrice + 2 * stopLossInPoints, entryPrice + 3 * stopLossInPoints])
+    setTargets([parsedEntryPrice + stopLossInPoints, parsedEntryPrice + 2 * stopLossInPoints, parsedEntryPrice + 3 * stopLossInPoints])
   }, [riskPerTrade, entryPrice, stopLossPrice])
 
   return (
@@ -23,8 +27,8 @@ const Calculator: React.FC = () => {
       <FormControl>
         <FormLabel>Risk Per Trade (R)</FormLabel>
         <NumberInput
-          value={riskPerTrade || 1}
-          onChange={(valueString) => setRiskPerTrade(parseInt(valueString))}
+          value={riskPerTrade}
+          onChange={(valueString) => setRiskPerTrade(valueString)}
           min={1}>
           <NumberInputField />
           <NumberInputStepper>
@@ -37,8 +41,8 @@ const Calculator: React.FC = () => {
       <FormControl>
         <FormLabel>Entry Price</FormLabel>
         <NumberInput
-          value={entryPrice || 1}
-          onChange={(valueString) => setEntryPrice(parseInt(valueString))}
+          value={entryPrice}
+          onChange={(valueString) => setEntryPrice(valueString)}
           min={1}>
           <NumberInputField />
           <NumberInputStepper>
@@ -51,8 +55,8 @@ const Calculator: React.FC = () => {
       <FormControl>
         <FormLabel>Stop Loss (SL)</FormLabel>
         <NumberInput
-          value={stopLossPrice || 1}
-          onChange={(valueString) => setStopLossPrice(parseInt(valueString))}
+          value={stopLossPrice}
+          onChange={(valueString) => setStopLossPrice(valueString)}
           min={1}>
           <NumberInputField />
           <NumberInputStepper>
@@ -61,12 +65,16 @@ const Calculator: React.FC = () => {
           </NumberInputStepper>
         </NumberInput>
       </FormControl>
-      <Alert status='info'>
-        <VStack alignItems='flex-start'>
-          <Text>Quantity: <b>{quantity}</b></Text>
-          <Text>Target: <b>{targets.join(' - ')}</b></Text>
-        </VStack>
-      </Alert>
+      {
+        quantity && (
+          <Alert status='info'>
+            <VStack alignItems='flex-start'>
+              <Text>Quantity: <b>{quantity}</b></Text>
+              <Text>Target: <b>{targets.join(' - ')}</b></Text>
+            </VStack>
+          </Alert>
+        )
+      }
     </VStack>
   )
 }
